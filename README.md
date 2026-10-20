@@ -1,8 +1,7 @@
-# AEDs II - Oficinas e Atividade 2 - Sistemas de software com Estruturas de dados lineares 
-Oficinas e atividade pontuada realizada em AEDs II, tendo em vista estruturas de dados lineares em sistemas de software.
+# AEDs II - Oficinas e Atividade 2 - Sistemas de software com estruturas de dados lineares
 
-## Aluno 
+Oficinas e atividade pontuada da disciplina de AEDs II, abordando estruturas de dados lineares em sistemas de software.
 
-* Nome completo do aluno 1
+## Aluno
 
-
+* Pedro Lucas Soares Rezende

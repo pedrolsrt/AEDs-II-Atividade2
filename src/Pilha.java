@@ -2,59 +2,60 @@ import java.util.NoSuchElementException;
 
 public class Pilha<E> {
 
-	private Celula<E> topo;
-	private Celula<E> fundo;
+    private Celula<E> topo;
+    private final Celula<E> fundo;
 
-	public Pilha() {
+    public Pilha() {
+        fundo = new Celula<>();
+        topo = fundo;
+    }
 
-		Celula<E> sentinela = new Celula<E>();
-		fundo = sentinela;
-		topo = sentinela;
+    public boolean vazia() {
+        return topo == fundo;
+    }
 
-	}
+    public void empilhar(E item) {
+        topo = new Celula<>(item, topo);
+    }
 
-	public boolean vazia() {
-		return fundo == topo;
-	}
+    public E desempilhar() {
+        E item = consultarTopo();
+        topo = topo.getProximo();
+        return item;
+    }
 
-	public void empilhar(E item) {
+    public E consultarTopo() {
+        if (vazia()) {
+            throw new NoSuchElementException("Não há nenhum item na pilha.");
+        }
 
-		topo = new Celula<E>(item, topo);
-	}
+        return topo.getItem();
+    }
 
-	public E desempilhar() {
+    public Pilha<E> subPilha(int numItens) {
+        if (numItens < 0) {
+            throw new IllegalArgumentException("Quantidade inválida.");
+        }
 
-		E desempilhado = consultarTopo();
-		topo = topo.getProximo();
-		return desempilhado;
+        Pilha<E> auxiliar = new Pilha<>();
+        Pilha<E> resultado = new Pilha<>();
+        Celula<E> atual = topo;
 
-	}
+        for (int i = 0; i < numItens; i++) {
+            if (atual == fundo) {
+                throw new IllegalArgumentException(
+                    "A pilha não contém essa quantidade de elementos."
+                );
+            }
 
-	public E consultarTopo() {
+            auxiliar.empilhar(atual.getItem());
+            atual = atual.getProximo();
+        }
 
-		if (vazia()) {
-			throw new NoSuchElementException("Nao há nenhum item na pilha!");
-		}
+        while (!auxiliar.vazia()) {
+            resultado.empilhar(auxiliar.desempilhar());
+        }
 
-		return topo.getItem();
-
-	}
-
-	/**
-	 * Cria e devolve uma nova pilha contendo os primeiros numItens elementos
-	 * do topo da pilha atual.
-	 * 
-	 * Os elementos são mantidos na mesma ordem em que estavam na pilha original.
-	 * Caso a pilha atual possua menos elementos do que o valor especificado,
-	 * uma exceção será lançada.
-	 *
-	 * @param numItens o número de itens a serem copiados da pilha original.
-	 * @return uma nova instância de Pilha<E> contendo os numItens primeiros elementos.
-	 * @throws IllegalArgumentException se a pilha não contém numItens elementos.
-	 */
-	public Pilha<E> subPilha(int numItens) {
-		
-		// TODO
-		return null;
-	}
+        return resultado;
+    }
 }
