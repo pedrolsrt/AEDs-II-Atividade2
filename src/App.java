@@ -10,7 +10,7 @@ public class App {
     static Scanner teclado = new Scanner(System.in, StandardCharsets.UTF_8);
     static Produto[] produtosCadastrados;
     static int quantosProdutos;
-    static Pilha<Pedido> pilhaPedidos = new Pilha<>();
+    static Fila<Pedido> filaPedidos = new Fila<>();
 
     static void cabecalho() {
         System.out.println("\nAEDs II COMÉRCIO DE COISINHAS");
@@ -34,6 +34,26 @@ public class App {
         }
     }
 
+    static double lerValor(String mensagem) {
+        while (true) {
+            System.out.println(mensagem);
+
+            try {
+                double valor = Double.parseDouble(
+                    teclado.nextLine().trim().replace(',', '.')
+                );
+
+                if (Double.isFinite(valor) && valor >= 0) {
+                    return valor;
+                }
+            } catch (NumberFormatException e) {
+                // Solicita novamente.
+            }
+
+            System.out.println("Digite um valor válido maior ou igual a zero.");
+        }
+    }
+
     static int menu() {
         cabecalho();
         System.out.println("1 - Listar todos os produtos");
@@ -41,7 +61,9 @@ public class App {
         System.out.println("3 - Procurar por um produto, por nome");
         System.out.println("4 - Iniciar novo pedido");
         System.out.println("5 - Fechar pedido");
-        System.out.println("6 - Listar produtos dos pedidos mais recentes");
+        System.out.println("6 - Exibir o valor total médio dos N primeiros pedidos");
+        System.out.println("7 - Exibir primeiros pedidos acima de um valor");
+        System.out.println("8 - Exibir primeiros pedidos com determinado produto");
         System.out.println("0 - Sair");
         return lerInteiro("Digite sua opção:");
     }
@@ -171,39 +193,99 @@ public class App {
             return;
         }
 
-        pilhaPedidos.empilhar(pedido);
+        filaPedidos.enfileirar(pedido);
         System.out.println("Pedido finalizado com sucesso.");
         System.out.println(pedido);
     }
 
-    public static void listarProdutosPedidosRecentes() {
-        if (pilhaPedidos.vazia()) {
+    static boolean verificarPedidos() {
+        if (filaPedidos.vazia()) {
             System.out.println("Nenhum pedido finalizado.");
+            return false;
+        }
+
+        return true;
+    }
+
+    static int lerQuantidadePedidos() {
+        int quantidade;
+
+        do {
+            quantidade = lerInteiro(
+                "Quantos primeiros pedidos deseja considerar?"
+            );
+        } while (quantidade <= 0);
+
+        return quantidade;
+    }
+
+    public static void exibirValorMedioPedidos() {
+        if (!verificarPedidos()) {
             return;
         }
 
-        int quantidade = lerInteiro(
-            "Quantos pedidos recentes deseja consultar?"
-        );
+        int quantidade = lerQuantidadePedidos();
 
-        if (quantidade <= 0) {
-            System.out.println("Informe uma quantidade positiva.");
+        try {
+            double media = filaPedidos.calcularValorMedio(
+                Pedido::valorFinal, quantidade
+            );
+
+            System.out.printf("Valor total médio: R$ %.2f%n", media);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    static void exibirPedidos(Fila<Pedido> pedidos) {
+        if (pedidos.vazia()) {
+            System.out.println("Nenhum pedido atende ao critério.");
+            return;
+        }
+
+        while (!pedidos.vazia()) {
+            System.out.println(pedidos.desenfileirar());
+        }
+    }
+
+    public static void exibirPedidosAcimaDoValor() {
+        if (!verificarPedidos()) {
+            return;
+        }
+
+        int quantidade = lerQuantidadePedidos();
+        double valor = lerValor("Exibir pedidos com valor total maior que:");
+
+        try {
+            Fila<Pedido> resultado = filaPedidos.filtrar(
+                pedido -> pedido.valorFinal() > valor, quantidade
+            );
+
+            exibirPedidos(resultado);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void exibirPedidosComProduto() {
+        if (!verificarPedidos()) {
+            return;
+        }
+
+        int quantidade = lerQuantidadePedidos();
+        Produto produto = localizarProdutoDescricao();
+
+        if (produto == null) {
+            System.out.println("Produto não encontrado.");
             return;
         }
 
         try {
-            Pilha<Pedido> recentes = pilhaPedidos.subPilha(quantidade);
+            Fila<Pedido> resultado = filaPedidos.filtrar(
+                pedido -> pedido.existeNoPedido(produto) != null, quantidade
+            );
 
-            while (!recentes.vazia()) {
-                Pedido pedido = recentes.desempilhar();
-                System.out.println("\nPedido: " + pedido.hashCode());
-
-                for (ItemDePedido item : pedido.getItensDoPedido()) {
-                    if (item != null) {
-                        System.out.println(item.getProduto());
-                    }
-                }
-            }
+            exibirPedidos(resultado);
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
@@ -232,7 +314,9 @@ public class App {
                     finalizarPedido(pedido);
                     pedido = null;
                 }
-                case 6 -> listarProdutosPedidosRecentes();
+                case 6 -> exibirValorMedioPedidos();
+                case 7 -> exibirPedidosAcimaDoValor();
+                case 8 -> exibirPedidosComProduto();
                 case 0 -> System.out.println("Programa encerrado.");
                 default -> System.out.println("Opção inválida.");
             }
